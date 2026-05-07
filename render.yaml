@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────
+# render.yaml — Configuration de déploiement sur Render
+# ─────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: payment-api
+    runtime: java
+    runtimeVersion: 17
+    
+    # Source du code
+    repo: https://github.com/TFD-237/payment-api.git
+    branch: main
+    
+    # Commande de build et démarrage
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/*.jar
+    
+    # Port exposé (Render injecte $PORT automatiquement)
+    envVars:
+      - key: PORT
+        value: 8080
+    
+    # Service PostgreSQL optionnel
+    # Si vous voulez une BD persistante, décommentez :
+    # postgres:
+    #   - name: payment-db
+    #     plan: free  # ou starter, standard, etc.
+
+# ─────────────────────────────────────────────────────────────
+# INSTRUCTIONS :
+# 1. Créer un service PostgreSQL sur Render (optionnel, mais recommandé)
+# 2. Copier la DATABASE_URL générée par Render
+# 3. Dans le dashboard Render :
+#    - Environment → Ajouter DATABASE_URL
+#    - Ajouter aussi : DB_USER, DB_PASSWORD, DB_DRIVER, JPA_DIALECT
+# 4. Connecter votre repo GitHub
+# 5. Render déploiera automatiquement sur chaque push !
+# ─────────────────────────────────────────────────────────────
