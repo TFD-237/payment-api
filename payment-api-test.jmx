@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════════
+  PLAN DE TEST JMETER — API de Paiement ICT304
+  ═══════════════════════════════════════════════════════════════════════════════
+  
+  Technique ICT304 : TESTS DE PERFORMANCE (tests non-fonctionnels)
+  Objectif : mesurer le comportement sous charge de l'API
+  
+  Scénarios :
+  1. Charge normale  : 10 utilisateurs × 50 requêtes → baseline de performance
+  2. Charge élevée   : 100 utilisateurs × 100 requêtes → test de charge
+  3. Stress          : montée progressive jusqu'à 500 users → point de rupture
+  
+  Métriques collectées :
+  • Temps de réponse moyen, 90e et 95e percentile
+  • Débit (requêtes/seconde)
+  • Taux d'erreur (%)
+  
+  Pour exécuter :
+    jmeter -n -t payment-api-test.jmx -l results.jtl -e -o rapport-html/
+  ═══════════════════════════════════════════════════════════════════════════════
+-->
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="ICT304 Payment API — Test de Performance" enabled="true">
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
+    <hashTree>
+
+      <!-- Variables globales -->
+      <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="BASE_URL" elementType="Argument">
+            <stringProp name="Argument.name">BASE_URL</stringProp>
+            <stringProp name="Argument.value">localhost</stringProp>
+          </elementProp>
+          <elementProp name="PORT" elementType="Argument">
+            <stringProp name="Argument.name">PORT</stringProp>
+            <stringProp name="Argument.value">8080</stringProp>
+          </elementProp>
+        </collectionProp>
+      </Arguments>
+      <hashTree/>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           SCÉNARIO 1 : CHARGE NORMALE (10 users × 50 req)
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Charge Normale — 10 utilisateurs" enabled="true">
+        <intProp name="ThreadGroup.num_threads">10</intProp>
+        <intProp name="ThreadGroup.ramp_time">5</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_sampler" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">50</intProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <!-- Requête : Consulter le solde -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /balance" enabled="true">
+          <stringProp name="HTTPSampler.domain">${BASE_URL}</stringProp>
+          <stringProp name="HTTPSampler.port">${PORT}</stringProp>
+          <stringProp name="HTTPSampler.path">/api/v1/accounts/PAY-TEST001/balance</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+
+        <!-- Requête : Lister les comptes -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /accounts" enabled="true">
+          <stringProp name="HTTPSampler.domain">${BASE_URL}</stringProp>
+          <stringProp name="HTTPSampler.port">${PORT}</stringProp>
+          <stringProp name="HTTPSampler.path">/api/v1/accounts</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           SCÉNARIO 2 : CHARGE ÉLEVÉE (100 users × 100 req)
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Charge Élevée — 100 utilisateurs" enabled="true">
+        <intProp name="ThreadGroup.num_threads">100</intProp>
+        <intProp name="ThreadGroup.ramp_time">20</intProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_sampler" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">100</intProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /deposit (charge)" enabled="true">
+          <stringProp name="HTTPSampler.domain">${BASE_URL}</stringProp>
+          <stringProp name="HTTPSampler.port">${PORT}</stringProp>
+          <stringProp name="HTTPSampler.path">/api/v1/accounts/deposit</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <stringProp name="Argument.value">{"accountNumber":"PAY-TEST001","amount":10.00,"description":"Test charge"}</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Headers JSON" enabled="true">
+            <collectionProp name="HeaderManager.headers">
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Content-Type</stringProp>
+                <stringProp name="Header.value">application/json</stringProp>
+              </elementProp>
+            </collectionProp>
+          </HeaderManager>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           LISTENERS : COLLECTE DE MÉTRIQUES
+           ════════════════════════════════════════════════════════════════════ -->
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Rapport Résumé" enabled="true">
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <responseData>false</responseData>
+          </value>
+        </objProp>
+        <stringProp name="filename">results.jtl</stringProp>
+      </ResultCollector>
+      <hashTree/>
+
+      <ResultCollector guiclass="StatGraphVisualizer" testclass="ResultCollector" testname="Graphe Statistiques" enabled="true">
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <success>true</success>
+          </value>
+        </objProp>
+        <stringProp name="filename"/>
+      </ResultCollector>
+      <hashTree/>
+
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
