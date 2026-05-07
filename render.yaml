@@ -6,34 +6,36 @@ services:
   - type: web
     name: payment-api
     runtime: java
-    runtimeVersion: 17
+    runtimeVersion: "17"
     
-    # Source du code
-    repo: https://github.com/TFD-237/payment-api.git
-    branch: main
+    # Répertoire de build
+    buildDir: .
     
-    # Commande de build et démarrage
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -jar target/*.jar
+    # Commande de build
+    buildCommand: "mvn clean package -DskipTests"
     
-    # Port exposé (Render injecte $PORT automatiquement)
+    # Commande de démarrage
+    startCommand: "java -jar target/payment-api-1.0.0.jar"
+    
+    # Variables d'environnement
     envVars:
       - key: PORT
-        value: 8080
+        value: "8080"
+      - key: DB_DRIVER
+        value: org.postgresql.Driver
     
-    # Service PostgreSQL optionnel
-    # Si vous voulez une BD persistante, décommentez :
-    # postgres:
-    #   - name: payment-db
-    #     plan: free  # ou starter, standard, etc.
+    # Nombre d'instances
+    numInstances: 1
+    
+    # Région
+    region: oregon
 
 # ─────────────────────────────────────────────────────────────
 # INSTRUCTIONS :
-# 1. Créer un service PostgreSQL sur Render (optionnel, mais recommandé)
-# 2. Copier la DATABASE_URL générée par Render
-# 3. Dans le dashboard Render :
-#    - Environment → Ajouter DATABASE_URL
-#    - Ajouter aussi : DB_USER, DB_PASSWORD, DB_DRIVER, JPA_DIALECT
-# 4. Connecter votre repo GitHub
-# 5. Render déploiera automatiquement sur chaque push !
+# 1. DATABASE_URL doit être ajoutée MANUELLEMENT dans le dashboard
+# 2. Ne pas commiter les secrets dans ce fichier
+# 3. Render va automatiquement :
+#    - Cloner le repo
+#    - Compiler avec Maven
+#    - Démarrer l'application
 # ─────────────────────────────────────────────────────────────
